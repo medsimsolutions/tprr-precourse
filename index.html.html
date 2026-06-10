@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tiny Patient Resus Ready — Med Sim Solutions</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+:root {
+  --navy:#0f1f3d; --navy2:#1a2f52; --navy3:#243868;
+  --teal:#00c896; --teal2:#00a87e; --teal-bg:#e6f9f4;
+  --coral:#e8472a; --coral-bg:#fdf0ed;
+  --amber:#f5a623; --amber-bg:#fef8ec;
+  --purple:#7c3aed; --purple-bg:#f3eeff;
+  --green:#16a34a; --green-bg:#dcfce7;
+  --slate:#f1f4f8; --border:#dde3ec;
+  --text:#0f1f3d; --muted:#64748b; --white:#ffffff;
+  --r:14px; --rs:9px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--slate);color:var(--text);-webkit-font-smoothing:antialiased;}
+
+/* ── NAV ── */
+#topnav{position:sticky;top:0;z-index:200;background:var(--navy);height:54px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;}
+.nav-brand{display:flex;align-items:center;gap:10px;}
+.nav-logomark{width:34px;height:34px;background:var(--teal);border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.nav-logomark svg{width:20px;height:20px;}
+.nav-names{display:flex;flex-direction:column;}
+.nav-course{font-size:13px;font-weight:700;color:white;letter-spacing:-0.01em;line-height:1.2;}
+.nav-brand-sub{font-size:10px;color:rgba(255,255,255,0.45);font-weight:400;letter-spacing:0.02em;}
+.nav-dots{display:flex;gap:5px;align-items:center;}
+.ndot{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,0.18);cursor:pointer;transition:background .3s;}
+.ndot.done{background:var(--teal);}
+.ndot.active{background:white;width:9px;height:9px;}
+
+/* ── HERO ── */
+#hero{background:var(--navy);padding:28px 16px 24px;position:relative;overflow:hidden;}
+#hero::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--teal),transparent);}
+.hero-ecg{position:absolute;top:0;right:-10px;bottom:0;width:55%;opacity:0.07;pointer-events:none;}
+.hero-eyebrow{display:inline-flex;align-items:center;gap:6px;background:rgba(0,200,150,0.15);border:1px solid rgba(0,200,150,0.3);border-radius:20px;padding:4px 10px;margin-bottom:14px;}
+.hero-eyebrow span{font-size:10px;font-weight:700;letter-spacing:0.07em;color:var(--teal);text-transform:uppercase;}
+.hero-pulse{width:8px;height:8px;border-radius:50%;background:var(--teal);animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.85)}}
+#hero h1{font-size:24px;font-weight:900;color:white;line-height:1.15;letter-spacing:-0.02em;margin-bottom:6px;}
+#hero h1 em{color:var(--teal);font-style:normal;}
+.hero-sub{font-size:13px;color:rgba(255,255,255,0.6);line-height:1.6;margin-bottom:18px;max-width:320px;}
+.vitals-strip{display:flex;gap:10px;margin-bottom:18px;}
+.vital-box{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:8px 12px;text-align:center;flex:1;}
+.vital-box .vb-val{font-size:18px;font-weight:800;color:var(--teal);letter-spacing:-0.02em;transition:color 1s;}
+.vital-box .vb-val.crit{color:var(--coral);}
+.vital-box .vb-label{font-size:9px;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:0.06em;margin-top:2px;}
+.hero-stats{display:flex;gap:20px;}
+.hstat .hn{font-size:22px;font-weight:800;color:white;}
+.hstat .hl{font-size:10px;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:0.05em;}
+
+/* ── PROGRESS ── */
+#prog-strip{background:white;border-bottom:1px solid var(--border);padding:11px 16px;}
+.ps-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:7px;}
+.ps-label{font-size:12px;font-weight:600;color:var(--text);}
+.ps-count{font-size:11px;color:var(--muted);}
+.ps-track{height:5px;background:var(--border);border-radius:3px;overflow:hidden;}
+.ps-fill{height:5px;background:linear-gradient(90deg,var(--teal2),var(--teal));border-radius:3px;transition:width .6s cubic-bezier(.4,0,.2,1);width:0%;}
+
+/* ── MODULE LIST ── */
+#module-list{padding:14px 14px 24px;display:flex;flex-direction:column;gap:10px;max-width:480px;margin:0 auto;}
+
+.mcard{background:white;border-radius:var(--r);border:1px solid var(--border);overflow:hidden;cursor:pointer;transition:transform .15s,box-shadow .15s;position:relative;}
+.mcard:active{transform:scale(.985);}
+.mcard.complete{border-color:var(--teal);}
+.mcard.complete::before{content:'';position:absolute;top:0;left:0;bottom:0;width:3px;background:var(--teal);}
+.mc-inner{display:flex;align-items:center;gap:12px;padding:14px 14px 10px;}
+.mc-iconbox{width:46px;height:46px;border-radius:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.mc-iconbox svg{width:26px;height:26px;}
+.mc-body{flex:1;min-width:0;}
+.mc-title{font-size:14px;font-weight:700;color:var(--text);line-height:1.25;margin-bottom:2px;}
+.mc-desc{font-size:11px;color:var(--muted);line-height:1.5;}
+.mc-right{display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex-shrink:0;}
+.mc-check{width:24px;height:24px;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;transition:all .3s;}
+.mc-check.done{background:var(--teal);border-color:var(--teal);}
+.mc-check.done svg{display:block;}
+.mc-check svg{display:none;width:12px;height:12px;}
+.mc-mins{font-size:10px;color:var(--muted);font-weight:500;}
+.mc-pills{display:flex;gap:5px;padding:0 14px 12px;flex-wrap:wrap;}
+.pill{font-size:10px;font-weight:600;padding:3px 8px;border-radius:20px;letter-spacing:0.02em;}
+.pill-read{background:#eff6ff;color:#1d4ed8;}
+.pill-pod{background:var(--purple-bg);color:var(--purple);}
+.pill-game{background:var(--green-bg);color:var(--green);}
+.pill-sim{background:var(--amber-bg);color:#b45309;}
+
+/* ── MODULE VIEW ── */
+#modview{display:none;max-width:480px;margin:0 auto;}
+#modview.open{display:block;}
+#mv-back{display:flex;align-items:center;gap:8px;padding:13px 16px;background:white;border-bottom:1px solid var(--border);cursor:pointer;font-size:13px;font-weight:600;color:var(--muted);position:sticky;top:54px;z-index:100;}
+#mv-back:hover{color:var(--text);}
+#mv-back svg{width:16px;height:16px;}
+#mv-topband{padding:18px 16px 14px;background:white;border-bottom:1px solid var(--border);}
+.mvt-eyebrow{font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--teal);margin-bottom:6px;}
+.mvt-title{font-size:20px;font-weight:800;color:var(--text);letter-spacing:-.02em;margin-bottom:6px;line-height:1.2;}
+.mvt-desc{font-size:13px;color:var(--muted);line-height:1.65;}
+#mv-lo{margin:12px 16px 0;background:var(--teal-bg);border-radius:var(--rs);padding:11px 14px;}
+.lo-head{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--teal2);margin-bottom:7px;}
+.lo-list{list-style:none;display:flex;flex-direction:column;gap:5px;}
+.lo-list li{font-size:12px;color:#064e3b;display:flex;gap:7px;line-height:1.5;}
+.lo-list li::before{content:'→';color:var(--teal);flex-shrink:0;font-weight:700;}
+#mv-tabs{display:flex;border-bottom:2px solid var(--border);background:white;overflow-x:auto;-webkit-overflow-scrolling:touch;padding:0 16px;}
+.tab{flex-shrink:0;padding:11px 14px;font-size:12px;font-weight:700;color:var(--muted);border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;transition:color .2s,border-color .2s;letter-spacing:.01em;}
+.tab.on{color:var(--teal);border-bottom-color:var(--teal);}
+.panel{display:none;padding:16px;}
+.panel.on{display:block;}
+
+/* ── ARTICLE ── */
+.art h2{font-size:15px;font-weight:800;color:var(--text);margin:18px 0 8px;padding-bottom:5px;border-bottom:2px solid var(--teal-bg);letter-spacing:-.01em;}
+.art h2:first-child{margin-top:0;}
+.art p{font-size:13px;line-height:1.8;color:#334155;margin-bottom:10px;}
+.art ul,.art ol{padding-left:18px;margin-bottom:10px;}
+.art li{font-size:13px;line-height:1.75;color:#334155;margin-bottom:3px;}
+.callout{background:var(--teal-bg);border-left:3px solid var(--teal);border-radius:0 var(--rs) var(--rs) 0;padding:10px 14px;margin:12px 0;font-size:12px;color:#064e3b;line-height:1.65;}
+.callout strong{color:var(--teal2);}
+.warning{background:#fff7ed;border-left:3px solid var(--amber);border-radius:0 var(--rs) var(--rs) 0;padding:10px 14px;margin:12px 0;font-size:12px;color:#92400e;line-height:1.65;}
+.bottom-line{background:var(--navy);color:white;border-radius:var(--rs);padding:13px 16px;margin-top:16px;font-size:12px;line-height:1.7;}
+.bottom-line strong{color:var(--teal);}
+.anzcor-badge{display:inline-flex;align-items:center;gap:5px;background:var(--navy);color:rgba(255,255,255,0.7);font-size:10px;font-weight:600;padding:3px 8px;border-radius:20px;margin-bottom:12px;letter-spacing:.03em;}
+.anzcor-badge span{color:var(--teal);}
+
+/* ── PODCAST ── */
+.pod-card{background:var(--navy);border-radius:var(--r);padding:16px;margin-bottom:12px;}
+.pod-hosts{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+.host-av{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;flex-shrink:0;border:2px solid rgba(255,255,255,0.2);}
+.pod-info .pod-show{font-size:10px;color:rgba(255,255,255,0.45);text-transform:uppercase;letter-spacing:.06em;font-weight:600;}
+.pod-info .pod-hosts-names{font-size:13px;font-weight:700;color:white;}
+.pod-ep-title{font-size:14px;font-weight:700;color:white;margin-bottom:6px;line-height:1.35;}
+.pod-ep-desc{font-size:12px;color:rgba(255,255,255,0.65);line-height:1.6;margin-bottom:14px;}
+.pod-player{background:rgba(255,255,255,0.08);border-radius:var(--rs);padding:12px 14px;}
+.pod-player-label{font-size:10px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;font-weight:600;}
+.pod-coming{font-size:12px;color:rgba(255,255,255,.5);font-style:italic;}
+.pod-note{font-size:11px;color:var(--muted);background:var(--slate);border-radius:var(--rs);padding:9px 12px;line-height:1.6;}
+
+/* ── CONTENT PLACEHOLDERS ── */
+.content-placeholder{background:var(--slate);border:2px dashed var(--border);border-radius:var(--rs);padding:20px;text-align:center;}
+.cp-icon{font-size:32px;margin-bottom:8px;}
+.cp-title{font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px;}
+.cp-desc{font-size:12px;color:var(--muted);line-height:1.6;}
+
+/* ── LOGISTICS ── */
+.info-block{background:white;border-radius:var(--rs);border:1px solid var(--border);overflow:hidden;margin-bottom:10px;}
+.ib-head{padding:10px 14px;background:var(--slate);border-bottom:1px solid var(--border);font-size:12px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:8px;}
+.ib-body{padding:12px 14px;}
+.info-row{display:flex;gap:10px;padding:7px 0;border-bottom:1px solid var(--border);font-size:13px;}
+.info-row:last-child{border-bottom:none;padding-bottom:0;}
+.ir-l{color:var(--muted);min-width:88px;font-size:11px;flex-shrink:0;padding-top:1px;}
+.ir-v{color:var(--text);font-weight:500;line-height:1.5;font-size:12px;}
+.tl-item{display:flex;gap:10px;margin-bottom:10px;}
+.tl-dot{width:9px;height:9px;border-radius:50%;background:var(--teal);margin-top:5px;flex-shrink:0;}
+.tl-text{font-size:12px;line-height:1.6;color:var(--text);}
+.tl-text strong{font-weight:700;color:var(--navy);}
+
+/* ── PSYCH SAFETY ── */
+.ps-card{background:white;border-radius:var(--rs);border:1px solid var(--border);padding:14px;margin-bottom:10px;display:flex;gap:12px;}
+.ps-iconwrap{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:20px;}
+.ps-text h4{font-size:13px;font-weight:700;color:var(--navy);margin-bottom:4px;}
+.ps-text p{font-size:12px;color:var(--muted);line-height:1.65;}
+
+/* ── COMPLETE ── */
+.done-btn{width:100%;padding:14px;background:var(--teal);color:white;border:none;border-radius:var(--rs);font-size:14px;font-weight:700;cursor:pointer;margin-top:20px;transition:background .2s;letter-spacing:.01em;}
+.done-btn:hover{background:var(--teal2);}
+.done-btn.marked{background:#059669;}
+
+/* ── WIN SCREEN ── */
+#win-screen{display:none;padding:40px 20px;text-align:center;}
+.win-icon{font-size:52px;margin-bottom:14px;}
+#win-screen h2{font-size:22px;font-weight:900;color:var(--navy);letter-spacing:-.02em;margin-bottom:8px;}
+#win-screen p{font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:20px;}
+.cert-card{background:var(--navy);border-radius:var(--r);padding:20px;margin-bottom:20px;text-align:center;}
+.cert-course{font-size:11px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px;font-weight:600;}
+.cert-title{font-size:16px;font-weight:800;color:var(--teal);letter-spacing:-.01em;margin-bottom:4px;}
+.cert-brand{font-size:11px;color:rgba(255,255,255,.3);}
+.ecg-line{width:100%;height:30px;margin:10px 0;}
+
+@media(max-width:380px){#hero h1{font-size:21px;}.mc-title{font-size:13px;}}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav id="topnav">
+  <div class="nav-brand">
+    <div class="nav-logomark">
+      <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round">
+        <path d="M3 12h3l2-7 4 14 3-9 2 4h4"/>
+      </svg>
+    </div>
+    <div class="nav-names">
+      <span class="nav-course">Tiny Patient Resus Ready</span>
+      <span class="nav-brand-sub">Med Sim Solutions</span>
+    </div>
+  </div>
+  <div class="nav-dots" id="nav-dots"></div>
+</nav>
+
+<!-- HOME VIEW -->
+<div id="home-view">
+
+  <!-- HERO -->
+  <div id="hero">
+    <svg class="hero-ecg" viewBox="0 0 400 120" preserveAspectRatio="none" fill="none">
+      <polyline points="0,60 40,60 55,20 65,100 80,60 100,60 110,45 120,75 130,60 180,60 195,10 210,110 225,60 270,60 285,35 295,85 305,60 400,60" stroke="white" stroke-width="2" fill="none"/>
+    </svg>
+    <div class="hero-eyebrow">
+      <div class="hero-pulse"></div>
+      <span>RNZCUC Pre-Course Learning</span>
+    </div>
+    <h1>Tiny Patient.<br><em>Resus Ready.</em></h1>
+    <p class="hero-sub">Complete all 8 modules before your simulation day. Your progress saves automatically.</p>
+    <div class="vitals-strip">
+      <div class="vital-box"><div class="vb-val crit" id="v-hr">0</div><div class="vb-label">HR</div></div>
+      <div class="vital-box"><div class="vb-val crit" id="v-spo2">--</div><div class="vb-label">SpO₂ %</div></div>
+      <div class="vital-box"><div class="vb-val crit" id="v-rr">0</div><div class="vb-label">RR</div></div>
+    </div>
+    <div class="hero-stats">
+      <div class="hstat"><div class="hn">8</div><div class="hl">Modules</div></div>
+      <div class="hstat"><div class="hn">~3h</div><div class="hl">Pre-course</div></div>
+      <div class="hstat"><div class="hn">10h</div><div class="hl">Sim day</div></div>
+    </div>
+  </div>
+
+  <!-- PROGRESS -->
+  <div id="prog-strip">
+    <div class="ps-row">
+      <span class="ps-label">Your progress</span>
+      <span class="ps-count" id="prog-count">0 of 8 complete</span>
+    </div>
+    <div class="ps-track"><div class="ps-fill" id="prog-fill"></div></div>
+  </div>
+
+  <!-- MODULES -->
+  <div id="module-list"></div>
+
+  <!-- WIN -->
+  <div id="win-screen">
+    <div class="win-icon">🎉</div>
+    <h2>Pre-course complete!</h2>
+    <svg class="ecg-line" viewBox="0 0 300 30" fill="none">
+      <polyline points="0,15 30,15 40,5 50,25 60,15 90,15 100,8 110,22 120,15 300,15" stroke="#00c896" stroke-width="2" fill="none"/>
+    </svg>
+    <div class="cert-card">
+      <div class="cert-course">Pre-Course Learning — Complete</div>
+      <div class="cert-title">Tiny Patient Resus Ready</div>
+      <div class="cert-brand">Med Sim Solutions · medsimsolutions.co.nz</div>
+    </div>
+    <p>You've completed all 8 modules. Show this screen to your facilitator on the day. Questions? <strong>medsimsolutionsnz@gmail.com</strong></p>
+  </div>
+
+</div><!-- /home-view -->
+
+<!-- MODULE VIEW -->
+<div id="modview">
+  <div id="mv-back" onclick="closeModule()">
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10 3L5 8l5 5"/></svg>
+    Back to modules
+  </div>
+  <div id="mv-topband">
+    <div class="mvt-eyebrow" id="mvt-eyebrow"></div>
+    <div class="mvt-title" id="mvt-title"></div>
+    <div class="mvt-desc" id="mvt-desc"></div>
+  </div>
+  <div id="mv-lo"><div class="lo-head">Learning objectives</div><ul class="lo-list" id="mv-lo-list"></ul></div>
+  <div id="mv-tabs"></div>
+  <div id="mv-panels"></div>
+</div>
+
+<script>
+// ── VITALS ANIMATION ──
+(function(){
+  const targets={hr:[0,118],spo2:['--','99'],rr:[0,22]};
+  const els={hr:document.getElementById('v-hr'),spo2:document.getElementById('v-spo2'),rr:document.getElementById('v-rr')};
+  let step=0,total=40;
+  setTimeout(()=>{
+    const iv=setInterval(()=>{
+      step++;
+      const p=step/total;
+      const ease=p<.5?2*p*p:1-Math.pow(-2*p+2,2)/2;
+      els.hr.textContent=Math.round(ease*118);
+      els.spo2.textContent=step<5?'--':Math.round(85+ease*14);
+      els.rr.textContent=Math.round(ease*22);
+      if(step>=total){
+        clearInterval(iv);
+        els.hr.classList.remove('crit'); els.spo2.classList.remove('crit'); els.rr.classList.remove('crit');
+        els.hr.style.color='var(--teal)'; els.spo2.style.color='var(--teal)'; els.rr.style.color='var(--teal)';
+      }
+    },40);
+  },600);
+})();
+
+// ── MODULE DATA ──
+const ICON_COLORS={logistics:'#e8f0fe',psych:'#f3e8ff',bls:'#dcfce7',acls:'#fef3c7',airway:'#fce7f3',vasc:'#dbeafe',trauma:'#fee2e2',team:'#f0fdf4'};
+
+const MODS=[
+{id:0,key:'logistics',title:'Course Logistics',eyebrow:'Module 1 · Getting Ready',
+ desc:'Everything you need before you arrive — timetable, what to bring, how the day runs, and how assessments work.',
+ mins:15,pills:['read','pod'],
+ los:['Understand the 10-hour course structure and timetable','Know what immersive simulation means in practice','Know what to bring and what to expect','Understand formative and summative assessment'],
+ tabs:['info','podcast'],tabLabels:['Course Info','Podcast'],
+ content:{
+  info:`<div class="info-block"><div class="ib-head">📅 Course overview</div><div class="ib-body">
+    <div class="info-row"><span class="ir-l">Format</span><span class="ir-v">10-hour immersive simulation day</span></div>
+    <div class="info-row"><span class="ir-l">Group size</span><span class="ir-v">6 RNZCUC trainees + 2–3 faculty</span></div>
+    <div class="info-row"><span class="ir-l">Faculty</span><span class="ir-v">Paediatric emergency specialists — doctor, nurse ± paramedic</span></div>
+    <div class="info-row"><span class="ir-l">Venue</span><span class="ir-v">Your actual clinical space or a high-fidelity replica</span></div>
+    <div class="info-row"><span class="ir-l">Cost</span><span class="ir-v">$1,000 + GST per trainee (cf. APLS at $3,600+)</span></div>
+  </div></div>
+  <div class="info-block"><div class="ib-head">🗓 Day timetable</div><div class="ib-body">
+    <div class="tl-item"><div class="tl-dot"></div><div class="tl-text"><strong>08:00–08:30</strong> Welcome, introductions, psychological safety</div></div>
+    <div class="tl-item"><div class="tl-dot"></div><div class="tl-text"><strong>08:30–09:30</strong> Skills — Cardiac life support (BLS, ACLS, defibrillation)</div></div>
+    <div class="tl-item"><div class="tl-dot"></div><div class="tl-text"><strong>09:30–10:00</strong> Skills — Airway management</div></div>
+    <div class="tl-item"><div class="tl-dot"></div><div class="tl-text"><strong>10:00–10:30</strong> Skills — Vascular access and IO</div></div>
+    <div class="tl-item"><div class="tl-dot"></div><div class="tl-text"><strong>10:30–10:45</strong> Morning tea</div></div>
+    <div class="tl-item"><div class="tl-dot"></div><div class="tl-text"><strong>10:45–12:45</strong> Scenarios 1–2: Seizures & respiratory depression, Sepsis & shock</div></div>
+    <div class="tl-item"><div class="tl-dot"></div><div class="tl-text"><strong>12:45–13:30</strong> Lunch</div></div>
+    <div class="tl-item"><div class="tl-dot"></div><div class="tl-text"><strong>13:30–15:40</strong> Scenarios 3–5: Anaphylaxis, Toxicology, Tachyarrhythmia</div></div>
+    <div class="tl-item"><div class="tl-dot"></div><div class="tl-text"><strong>15:40–15:55</strong> Afternoon tea</div></div>
+    <div class="tl-item"><div class="tl-dot"></div><div class="tl-text"><strong>15:55–17:40</strong> Scenario 6 (Diabetes) + Q&A + Assessments</div></div>
+    <div class="tl-item"><div class="tl-dot"></div><div class="tl-text"><strong>17:40–18:00</strong> Wrap-up, feedback, certificates</div></div>
+  </div></div>
+  <div class="info-block"><div class="ib-head">👜 What to bring</div><div class="ib-body">
+    <div class="info-row"><span class="ir-l">Clothing</span><span class="ir-v">Clinical scrubs or clothes you can kneel and move in</span></div>
+    <div class="info-row"><span class="ir-l">Food</span><span class="ir-v">Lunch provided. Bring snacks if you need them</span></div>
+    <div class="info-row"><span class="ir-l">Mindset</span><span class="ir-v">Curiosity. You will not be judged for errors — this is exactly where learning happens</span></div>
+  </div></div>
+  <div class="info-block"><div class="ib-head">📊 Assessment</div><div class="ib-body">
+    <p style="font-size:12px;color:#334155;line-height:1.7;">Every participant leads one scenario, assessed against RNZCUC learning outcomes. Formative feedback is given in every debrief. A written summary report goes to RNZCUC. Assessment is supportive — the goal is to identify strengths and growth areas, not to catch anyone out.</p>
+  </div></div>`,
+  podcast:podCard('What actually happens on a Tiny Patient Resus Ready sim day?','Scout and Billie give you the real-talk version — not the brochure version. Why you\'ll be nervous, why that\'s completely fine, and what makes immersive simulation different to every other course you\'ve done.')
+ }
+},
+{id:1,key:'psych',title:'Psychological Safety',eyebrow:'Module 2 · Foundation',
+ desc:'Psychological safety underpins everything in the simulation room — and in real emergencies. Understanding it will change how you participate, lead, and debrief.',
+ mins:20,pills:['read','pod','sim'],
+ los:['Define psychological safety in a clinical and simulation context','Explain how it improves team performance and patient safety','Identify behaviours that build or erode safety','Apply a psychologically safe mindset to simulation and practice'],
+ tabs:['article','podcast','sim'],tabLabels:['Article','Podcast','AI Sim'],
+ content:{
+  article:`<div class="art">
+    <div class="anzcor-badge">Foundation module — <span>no ANZCOR guidelines required</span></div>
+    <h2>What is psychological safety?</h2>
+    <p>Psychological safety is the shared belief that a team is safe for interpersonal risk-taking — that speaking up, asking questions, and making mistakes will not result in humiliation or punishment. In clinical simulation, and in real paediatric emergencies, it is the difference between a team that adapts and one that silently repeats its errors.</p>
+    <div class="callout"><strong>The research:</strong> Amy Edmondson's foundational work shows teams with high psychological safety perform better, report errors earlier, and learn faster. In healthcare, this directly translates to better patient outcomes and improved clinical culture.</div>
+    <h2>Why it matters in urgent care</h2>
+    <p>Urgent care clinicians often work as sole practitioners or in small, rapidly assembled teams. When a child presents in extremis, the psychological safety of that team — often formed in seconds — determines whether the team leader gets accurate information, whether concerns are voiced, and whether the team adapts when the plan isn't working.</p>
+    <h2>What builds it and what erodes it</h2>
+    <p>Psychological safety is built through consistent behaviours, not a single intervention. Building behaviours include: modelling uncertainty openly ("I'm not sure — what do you think?"), explicitly inviting challenge, and responding to errors with curiosity rather than blame.</p>
+    <p>Erosion is often subtle: eye-rolling, dismissing concerns, interrupting, or debriefing in a way that identifies fault in individuals rather than systems.</p>
+    <h2>On your Tiny Patient Resus Ready day</h2>
+    <p>Your Med Sim Solutions faculty are trained in the science of psychological safety. The simulation room operates under a shared contract: errors are learning, not judgment. Your role is to engage fully, attempt things you're uncertain about, and speak up when you notice something — even when you're not sure.</p>
+    <div class="bottom-line"><strong>Bottom line:</strong> Psychological safety is not about being comfortable. It is about being willing to be wrong in front of others because the learning it enables matters more than the discomfort of the risk. It is the foundation of everything else.</div>
+  </div>`,
+  podcast:podCard('Psych safety isn\'t soft — it\'s the thing that saves lives','Scout and Billie get into why the most technically skilled team can still fail if no-one feels safe to speak up, and what it actually looks like when it goes wrong in an urgent care resus.'),
+  sim:`<div style="background:var(--slate);border-radius:var(--rs);overflow:hidden;margin-bottom:4px;">
+    <div style="background:var(--navy);padding:8px 14px;display:flex;align-items:center;gap:8px;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+      <span style="font-size:11px;font-weight:700;color:white;letter-spacing:.04em;">AI SIMULATION FACILITATOR — SPEAK YOUR ACTIONS ALOUD</span>
+    </div>
+    <iframe src="tprr_ai_simulation.html" style="width:100%;height:620px;border:none;display:block;" title="AI Verbal Simulation Facilitator" loading="lazy"></iframe>
+  </div>`
+ }
+},
+{id:2,key:'bls',title:'Paediatric Basic Life Support',eyebrow:'Module 3 · Core Clinical Skills',
+ desc:'Guideline 12.1-aligned BLS for infants and children. Compression depth, technique, ventilation ratios, and defibrillation in resource-variable urgent care settings.',
+ mins:30,pills:['read','pod','game','sim'],
+ los:['Apply correct compression technique and depth for infants and children','Use the correct 15:2 ratio for healthcare provider paediatric CPR','Select correct BVM size and deliver appropriate tidal volume','Make correct defibrillation decisions with and without paediatric pads'],
+ tabs:['article','podcast','game','sim'],tabLabels:['Article','Podcast','Practice','AI Sim'],
+ content:{
+  article:`<div class="art">
+    <div class="anzcor-badge">Source: <span>ANZCOR Guideline 12.1 (April 2026)</span></div>
+    <h2>Recognition and the decision to act</h2>
+    <p>Pulse palpation is not reliable as the sole determinant of cardiac arrest in infants and children — this is now confirmed by the 2025 ILCOR systematic review underpinning current ANZCOR guidance. The updated recommendation is clear: in infants and children who are unresponsive with absent or agonal breathing, healthcare providers should begin CPR. Do not wait for pulse certainty you are unlikely to achieve.</p>
+    <div class="callout"><strong>ANZCOR 2026 (Guideline 12.1, Section 9):</strong> Palpation of a pulse (or its absence) is not reliable as the sole determinant of cardiac arrest and need for chest compressions. In infants and children who are unresponsive and breathing is absent or agonal, healthcare providers should begin CPR.</div>
+    <h2>Compression technique and depth</h2>
+    <p><strong>Infants (under 12 months):</strong> The two-thumb encircling technique is the preferred method, producing consistently greater compression depth and less operator fatigue than two-finger technique. Thumbs may be placed side-by-side or overlapping. If unable to achieve optimal depth with this technique, the heel of one hand may be used. Target depth: approximately <strong>4cm or at least one-third the anteroposterior dimension</strong>.</p>
+    <p><strong>Children (over 12 months):</strong> Heel of one hand or two-handed technique to achieve optimal depth. Target: approximately <strong>5cm or at least one-third the anteroposterior dimension</strong>, and up to 5–6cm in adolescents. Rate: <strong>100–120 compressions per minute</strong> for both infants and children.</p>
+    <div class="warning"><strong>Full chest recoil is essential.</strong> Approximately 50% of each compression cycle should be release — allowing full chest wall recoil. Leaning on the chest between compressions reduces venous return and coronary perfusion pressure significantly. This is one of the most common and correctable errors in prolonged resuscitation.</div>
+    <h2>Compression-to-ventilation ratio</h2>
+    <p>In the urgent care clinical environment: <strong>15 compressions to 2 ventilations</strong>. This is the ratio for clinical teams trained in paediatric life support. Ventilation carries proportionally greater importance in paediatric than in adult arrest because paediatric cardiac arrest is predominantly asphyxial in origin — the final result of progressive respiratory failure or shock, not a primary cardiac event. Current resuscitation guidelines place a high value on ventilation as a component of paediatric CPR for trained clinical providers.</p>
+    <h2>Bag-mask ventilation</h2>
+    <p>If a BMV device is immediately available, provide 2 initial ventilations before commencing chest compressions. If BMV is not immediately available, start compressions while waiting for the device to arrive. Select the mask size that covers from the bridge of the nose to the cleft of the chin. Deliver only enough volume to produce visible chest rise — over-inflation causes gastric distension, diaphragmatic splinting, and aspiration risk.</p>
+    <h2>Defibrillation</h2>
+    <p>For manual defibrillation in infants and children, pads should be placed in an <strong>anterior-posterior position</strong> (per updated 2025 ANZCOR guidance). For children over 8 years: standard AED with adult pads and dose. For children 1–8 years: paediatric pads with dose attenuator preferred; if unavailable, adult AED is acceptable. For infants: manual defibrillator first preference, then AED with dose attenuator, then AED without attenuator. Do not withhold defibrillation because preferred equipment is unavailable.</p>
+    <div class="bottom-line"><strong>Bottom line:</strong> The two most consistently correctable gaps in paediatric BLS are compression depth (we under-compress) and chest recoil (we lean). Compress to at least one-third AP dimension. Fully release between every compression. Swap operators every two minutes without exception. Ventilate gently — visible chest rise only.</div>
+  </div>`,
+  podcast:podCard('When a tiny patient stops breathing','Scout and Billie break down paediatric BLS — the updated 2026 guidance on compression depth, why 15:2 is the ratio that matters in healthcare settings, and what to do when you\'ve got adult pads and a three-year-old.'),
+  game:`<div style="background:var(--slate);border-radius:var(--rs);overflow:hidden;margin-bottom:4px;">
+    <div style="background:var(--navy);padding:8px 14px;display:flex;align-items:center;gap:8px;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" stroke-width="2.5" stroke-linecap="round"><path d="M3 12h3l2-7 4 14 3-9 2 4h4"/></svg>
+      <span style="font-size:11px;font-weight:700;color:white;letter-spacing:.04em;">TPRR RESUS EQUIPMENT PRACTICE</span>
+    </div>
+    <iframe src="tprr_game.html" style="width:100%;height:640px;border:none;display:block;" title="Paediatric Resus Equipment Practice Game" loading="lazy"></iframe>
+  </div>`,
+  sim:`<div style="background:var(--slate);border-radius:var(--rs);overflow:hidden;margin-bottom:4px;">
+    <div style="background:var(--navy);padding:8px 14px;display:flex;align-items:center;gap:8px;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+      <span style="font-size:11px;font-weight:700;color:white;letter-spacing:.04em;">AI SIMULATION FACILITATOR — SPEAK YOUR ACTIONS ALOUD</span>
+    </div>
+    <iframe src="tprr_ai_simulation.html" style="width:100%;height:620px;border:none;display:block;" title="AI Verbal Simulation Facilitator" loading="lazy"></iframe>
+  </div>`
+ }
+},
+{id:3,key:'acls',title:'Advanced Cardiac Life Support',eyebrow:'Module 4 · Core Clinical Skills',
+ desc:'Paediatric ACLS — rhythm recognition, defibrillation protocols, drug dosing, and systematic assessment of reversible causes. Shockable and non-shockable algorithms.',
+ mins:30,pills:['read','pod','game','sim'],
+ los:['Identify shockable vs non-shockable rhythms in paediatric arrest','Apply correct energy dose and defibrillation sequence','Dose adrenaline and amiodarone accurately for paediatric weight','Systematically assess reversible causes using the 4Hs and 4Ts'],
+ tabs:['article','podcast','game','sim'],tabLabels:['Article','Podcast','Practice','AI Sim'],
+ content:{
+  article:`<div class="art">
+    <div class="anzcor-badge">Source: <span>Clinical guidelines (April 2026) — Fact-check required</span></div>
+    <h2>The algorithm structure</h2>
+    <p>Paediatric advanced cardiac life support follows two parallel pathways based on rhythm: shockable (VF/pVT) and non-shockable (asystole/PEA). Both require high-quality CPR as the foundation. The pathways diverge in the timing and role of defibrillation and drug therapy. The initial rhythm in paediatric arrest is non-shockable in approximately 85% of cases — asystole or PEA. The 15% who present with VF or pulseless VT have significantly better outcomes when that rhythm is identified and treated quickly.</p>
+    <div class="callout"><strong>Single-shock strategy:</strong> After each shock, resume CPR immediately — beginning with compressions — without pausing for a pulse check. Rhythm reassessment occurs every two minutes.</div>
+    <h2>Vascular access — IO when IV fails</h2>
+    <p>Do not make more than two IV attempts in a paediatric arrest before escalating to IO. Intraosseous access provides equivalent pharmacokinetics to IV for all resuscitation drugs. Proximal tibia: 2 cm below the tibial tuberosity, anteromedial surface, perpendicular to bone. Confirm with aspiration and flush. All resuscitation drugs work IO.</p>
+    <h2>Drug therapy</h2>
+    <p><strong>Adrenaline 0.01 mg/kg IV/IO</strong> (0.1 ml/kg of 1:10,000). Non-shockable arrest: give as soon as access is established, then every 3–5 minutes. Shockable arrest: give after the second shock, then every 3–5 minutes. Flush generously after IO administration.</p>
+    <p><strong>Amiodarone 5 mg/kg IV/IO</strong> for VF/pVT refractory to the third shock. May be repeated once. Flush with 5% dextrose.</p>
+    <p><strong>Fluid resuscitation:</strong> if hypovolaemia suspected, crystalloid (0.9% NaCl) 10 ml/kg IV/IO bolus, titrated to response.</p>
+    <h2>Reversible causes — 4Hs and 4Ts</h2>
+    <p>Assign explicitly to one team member within the first two minutes. 4Hs: Hypoxia, Hypovolaemia, Hypothermia/hyperthermia, Hyper/hypokalaemia or metabolic disorder (check blood glucose in every paediatric arrest). 4Ts: Tension pneumothorax, Tamponade, Toxins, Thrombosis. In urgent care: hypoxia, hypovolaemia, tension pneumothorax, and toxins are the most clinically relevant.</p>
+    <div class="callout"><strong>Blood glucose:</strong> Check BSL in every paediatric arrest. Hypoglycaemia is common in paediatric critical illness. Treat with 2 ml/kg of 10% glucose IV/IO.</div>
+    <div class="bottom-line"><strong>Bottom line:</strong> Most paediatric arrests are non-shockable — adrenaline and reversible cause correction are your primary tools. When a shockable rhythm is present, defibrillate early, resume CPR immediately, reach amiodarone by the third shock. Check blood glucose every time.</div>
+  </div>`,
+  podcast:podCard('Rhythms, shocks and the drugs you need at 2am','Paediatric ACLS unpacked — shockable vs non-shockable, how adrenaline dosing works by weight, amiodarone timing, and the 4Hs and 4Ts you cannot afford to miss.'),
+  game:`<div style="background:var(--slate);border-radius:var(--rs);overflow:hidden;margin-bottom:4px;">
+    <div style="background:var(--navy);padding:8px 14px;display:flex;align-items:center;gap:8px;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" stroke-width="2.5" stroke-linecap="round"><path d="M3 12h3l2-7 4 14 3-9 2 4h4"/></svg>
+      <span style="font-size:11px;font-weight:700;color:white;letter-spacing:.04em;">TPRR RESUS EQUIPMENT PRACTICE</span>
+    </div>
+    <iframe src="tprr_game.html" style="width:100%;height:640px;border:none;display:block;" title="Paediatric Resus Equipment Practice Game" loading="lazy"></iframe>
+  </div>`,
+  sim:`<div style="background:var(--slate);border-radius:var(--rs);overflow:hidden;margin-bottom:4px;">
+    <div style="background:var(--navy);padding:8px 14px;display:flex;align-items:center;gap:8px;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+      <span style="font-size:11px;font-weight:700;color:white;letter-spacing:.04em;">AI SIMULATION FACILITATOR — SPEAK YOUR ACTIONS ALOUD</span>
+    </div>
+    <iframe src="tprr_ai_simulation.html" style="width:100%;height:620px;border:none;display:block;" title="AI Verbal Simulation Facilitator" loading="lazy"></iframe>
+  </div>`
+ }
+},
+{id:4,key:'airway',title:'Paediatric Airway Management',eyebrow:'Module 5 · Core Clinical Skills',
+ desc:'Basic paediatric airway techniques — positioning, adjuncts, BVM sizing and EC clamp technique, and indications for escalation in urgent care settings.',
+ mins:25,pills:['read','pod','game','sim'],
+ los:['Position an infant and child correctly for airway opening','Select correct BVM size and apply EC clamp technique','Know indications and sizing for OPA and NPA in children','Recognise when to escalate airway management'],
+ tabs:['article','podcast','game','sim'],tabLabels:['Article','Podcast','Practice','AI Sim'],
+ content:{
+  article:`<div class="art">
+    <div class="anzcor-badge">Source: <span>Clinical guidelines (April 2026) — Fact-check required</span></div>
+    <h2>The paediatric airway is not a small adult airway</h2>
+    <p>Children under 2 years have a proportionally larger occiput causing passive neck flexion when supine, a large tongue relative to the oral cavity, a higher and more anterior larynx, and a trachea that is shorter, narrower, and highly susceptible to obstruction from minimal swelling. Small amounts of mucosal oedema cause proportionally dramatic increases in airway resistance. The margin between adequate and obstructed is narrower than in adults.</p>
+    <h2>Positioning</h2>
+    <p><strong>Infants:</strong> neutral or slight sniffing position. A small folded towel under the shoulders — not the head — corrects for the large occiput. Avoid hyperextension, which causes obstruction in infants.</p>
+    <p><strong>Children over ~2 years:</strong> sniffing position (head slightly extended, neck slightly flexed). A small pillow under the occiput achieves this in most children.</p>
+    <div class="callout"><strong>Jaw thrust</strong> is recommended when cervical spine injury is suspected — used instead of head tilt-chin lift, without neck movement.</div>
+    <h2>Bag-mask ventilation</h2>
+    <p>BMV is the recommended airway management technique during paediatric cardiac arrest in urgent care — preferred over early intubation or supraglottic airway unless the team has sufficient expertise and resources. Mask from bridge of nose to chin cleft. EC clamp grip — two fingers on the mask, three lifting the mandible along the bone, not pressing into soft tissue. Visible chest rise only — over-inflation causes gastric distension, vagal bradycardia, and aspiration risk.</p>
+    <h2>Adjuncts and advanced airway</h2>
+    <p><strong>OPA:</strong> sized from centre of mouth to angle of jaw. Insert directly in children — do not rotate as in adults. <strong>NPA:</strong> sized from nostril to tragus. Contraindicated in suspected basal skull fracture. <strong>Cuffed ETT</strong> is now recommended for emergency intubation of infants over 28 days/3kg and children. After secure airway: ventilate at approximately 30 breaths/min for infants, 25 breaths/min for children over 1 year.</p>
+    <div class="bottom-line"><strong>Bottom line:</strong> Position before everything else. Neutral for infants, sniffing for children. Mask to chin cleft. EC clamp. Visible chest rise only. BMV is your primary tool. Escalate early and activate retrieval before the airway becomes unmanageable.</div>
+  </div>`,
+  podcast:podCard('The paediatric airway is not a small adult airway','Why paediatric airways fail when adult assumptions are applied, what sniffing position actually looks like, the EC clamp grip done right, and when to stop and escalate.'),
+  game:`<div style="background:var(--slate);border-radius:var(--rs);overflow:hidden;margin-bottom:4px;">
+    <div style="background:var(--navy);padding:8px 14px;display:flex;align-items:center;gap:8px;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" stroke-width="2.5" stroke-linecap="round"><path d="M3 12h3l2-7 4 14 3-9 2 4h4"/></svg>
+      <span style="font-size:11px;font-weight:700;color:white;letter-spacing:.04em;">TPRR RESUS EQUIPMENT PRACTICE</span>
+    </div>
+    <iframe src="tprr_game.html" style="width:100%;height:640px;border:none;display:block;" title="Paediatric Resus Equipment Practice Game" loading="lazy"></iframe>
+  </div>`,
+  sim:`<div style="background:var(--slate);border-radius:var(--rs);overflow:hidden;margin-bottom:4px;">
+    <div style="background:var(--navy);padding:8px 14px;display:flex;align-items:center;gap:8px;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+      <span style="font-size:11px;font-weight:700;color:white;letter-spacing:.04em;">AI SIMULATION FACILITATOR — SPEAK YOUR ACTIONS ALOUD</span>
+    </div>
+    <iframe src="tprr_ai_simulation.html" style="width:100%;height:620px;border:none;display:block;" title="AI Verbal Simulation Facilitator" loading="lazy"></iframe>
+  </div>`
+ }
+},
+{id:5,key:'vasc',title:'Vascular Access & Intraosseous',eyebrow:'Module 6 · Core Clinical Skills',
+ desc:'Paediatric IV and IO access — tibial IO landmarks, insertion technique, confirmation, and safe use for emergency drugs and fluids.',
+ mins:25,pills:['read','pod','game','sim'],
+ los:['Identify the correct tibial IO insertion landmark in infants and children','Describe IO insertion steps and confirmation technique','Know which drugs and fluids can be given IO','Escalate to IO appropriately when IV access fails'],
+ tabs:['article','podcast','game','sim'],tabLabels:['Article','Podcast','Practice','AI Sim'],
+ content:{
+  article:`<div class="art">
+    <div class="anzcor-badge">Source: <span>Clinical guidelines (April 2026) — Fact-check required</span></div>
+    <h2>When to stop trying IV</h2>
+    <p>Peripheral IV access in infants and small children is technically demanding — particularly in cardiovascular compromise when veins are collapsed and time is critical. In a paediatric arrest, time spent on failed IV attempts is time not spent on compressions and drug delivery. The threshold for escalation to IO is: two attempts, then go IO.</p>
+    <h2>IO landmark and technique</h2>
+    <p><strong>Primary site — proximal tibia:</strong> flat anteromedial surface, approximately 2 cm below the tibial tuberosity, perpendicular to the bone surface (90 degrees). Insert with a drilling or twisting motion until you feel a decrease in resistance as you enter the medullary cavity. Remove the stylet. Aspirate — bone marrow confirms placement. Flush with 5–10 ml of 0.9% sodium chloride — should flow freely without subcutaneous extravasation and with the needle remaining upright without support.</p>
+    <div class="callout"><strong>Secondary sites:</strong> distal tibia (2 cm proximal to medial malleolus) and distal femur (2–3 cm proximal to lateral femoral condyle). Proximal tibia is the default first-choice site in urgent care.</div>
+    <h2>Drug and fluid administration</h2>
+    <p>All resuscitation drugs can be given IO — adrenaline, amiodarone, glucose, anticonvulsants, antibiotics. Flush each drug with 5–10 ml of 0.9% NaCl to ensure central delivery. Fluid boluses require a pressurised system — gravity alone is insufficient. Use a pressure bag or syringe push technique.</p>
+    <h2>Contraindications and complications</h2>
+    <p>Do not insert IO in a fractured bone. Relative contraindications: previous IO attempt in the same bone within 24 hours, overlying infection or burns, osteogenesis imperfecta. The most common complication is extravasation — monitor the insertion site continuously. Compartment syndrome is rare but serious.</p>
+    <div class="bottom-line"><strong>Bottom line:</strong> Two IV attempts in a paediatric arrest, then go IO. Proximal tibia, 2 cm below the tuberosity, 90 degrees. Confirm with aspiration and flush. Every emergency drug works IO. Flush every bolus with 5–10 ml saline and pressure-bag your fluids.</div>
+  </div>`,
+  podcast:podCard('When the vein says no — IO access in urgent care','When to stop trying IV, where the tibial IO landmark actually is, confirming placement, and why urgent care teams hesitate when they absolutely should not.'),
+  game:`<div style="background:var(--slate);border-radius:var(--rs);overflow:hidden;margin-bottom:4px;">
+    <div style="background:var(--navy);padding:8px 14px;display:flex;align-items:center;gap:8px;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" stroke-width="2.5" stroke-linecap="round"><path d="M3 12h3l2-7 4 14 3-9 2 4h4"/></svg>
+      <span style="font-size:11px;font-weight:700;color:white;letter-spacing:.04em;">TPRR RESUS EQUIPMENT PRACTICE</span>
+    </div>
+    <iframe src="tprr_game.html" style="width:100%;height:640px;border:none;display:block;" title="Paediatric Resus Equipment Practice Game" loading="lazy"></iframe>
+  </div>`,
+  sim:`<div style="background:var(--slate);border-radius:var(--rs);overflow:hidden;margin-bottom:4px;">
+    <div style="background:var(--navy);padding:8px 14px;display:flex;align-items:center;gap:8px;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+      <span style="font-size:11px;font-weight:700;color:white;letter-spacing:.04em;">AI SIMULATION FACILITATOR — SPEAK YOUR ACTIONS ALOUD</span>
+    </div>
+    <iframe src="tprr_ai_simulation.html" style="width:100%;height:620px;border:none;display:block;" title="AI Verbal Simulation Facilitator" loading="lazy"></iframe>
+  </div>`
+ }
+},
+{id:6,key:'trauma',title:'Paediatric Trauma Management',eyebrow:'Module 7 · Core Clinical Skills',
+ desc:'Primary survey, haemorrhage control, and paediatric trauma stabilisation in urgent care. ABCDE approach for children, weight estimation, and fluid resuscitation.',
+ mins:25,pills:['read','pod','game','sim'],
+ los:['Apply ABCDE primary survey to a paediatric trauma patient','Control haemorrhage using direct pressure and tourniquet','Calculate fluid resuscitation volumes for paediatric weight','Recognise traumatic shock and escalate appropriately'],
+ tabs:['article','podcast','game','sim'],tabLabels:['Article','Podcast','Practice','AI Sim'],
+ content:{
+  article:`<div class="art">
+    <div class="anzcor-badge">Source: <span>Clinical guidelines (April 2026) — Fact-check required</span></div>
+    <h2>Why children are different in trauma</h2>
+    <p>Children compensate for haemorrhage remarkably well — until they don't. Normal blood pressure can be maintained while losing up to 30–35% of circulating volume, with tachycardia and subtle signs of shock that are easy to underestimate. By the time hypotension appears, physiological reserve is exhausted. Tachycardia in a trauma patient is haemorrhagic shock until proven otherwise. Children's flexible bones mean significant internal organ injury occurs without external bony trauma. Their proportionally larger heads make them more vulnerable to traumatic brain injury.</p>
+    <h2>Weight estimation</h2>
+    <p>Broselow tape is the most accurate bedside tool. APLS formula: weight (kg) = (age in years + 4) × 2 for children 1–10 years. Infants: birth weight ~3.5 kg, doubling by 5 months, tripling by 12 months.</p>
+    <h2>Primary survey — ABCDE with trauma modifications</h2>
+    <p><strong>A:</strong> Jaw thrust for suspected cervical spine injury — not head tilt. Inline stabilisation. <strong>B:</strong> Tension pneumothorax — needle decompression 2nd ICS midclavicular line or 4th/5th ICS anterior axillary line. Seal open chest wounds with three-sided occlusive dressing. <strong>C:</strong> Direct pressure for external haemorrhage. Tourniquet for life-threatening limb bleeding. IV/IO access. Tachycardia, prolonged cap refill >2 sec centrally, mottling, altered conscious state are your shock indicators. <strong>D:</strong> GCS and pupils — declining GCS is neurosurgical emergency. <strong>E:</strong> Fully expose, then cover — children lose heat rapidly and hypothermia worsens coagulopathy and cardiac function.</p>
+    <h2>Fluid resuscitation</h2>
+    <p>Initial bolus: <strong>10 ml/kg 0.9% NaCl IV/IO</strong>, titrated to response. This is updated guidance — routine 20 ml/kg boluses are no longer recommended. Use blood products as early as available for haemorrhagic shock — crystalloid without haemorrhage control worsens coagulopathy. In traumatic cardiac arrest: haemorrhage control and bilateral thoracostomy before adrenaline. Activate retrieval to a designated paediatric trauma centre early.</p>
+    <div class="bottom-line"><strong>Bottom line:</strong> Tachycardia means shock. Do not wait for hypotension. Haemorrhage control first. Fluid bolus 10 ml/kg crystalloid titrated. Use blood early. ABCDE with trauma modifications. Activate retrieval before deterioration — do not delay transport trying to fully stabilise.</div>
+  </div>`,
+  podcast:podCard('Tiny trauma — the paediatric primary survey','Why trauma in children is different, how to estimate weight when you have no history, the fluid resus calculation you need memorised, and when to stop and call retrieval.'),
+  game:`<div style="background:var(--slate);border-radius:var(--rs);overflow:hidden;margin-bottom:4px;">
+    <div style="background:var(--navy);padding:8px 14px;display:flex;align-items:center;gap:8px;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" stroke-width="2.5" stroke-linecap="round"><path d="M3 12h3l2-7 4 14 3-9 2 4h4"/></svg>
+      <span style="font-size:11px;font-weight:700;color:white;letter-spacing:.04em;">TPRR RESUS EQUIPMENT PRACTICE</span>
+    </div>
+    <iframe src="tprr_game.html" style="width:100%;height:640px;border:none;display:block;" title="Paediatric Resus Equipment Practice Game" loading="lazy"></iframe>
+  </div>`,
+  sim:`<div style="background:var(--slate);border-radius:var(--rs);overflow:hidden;margin-bottom:4px;">
+    <div style="background:var(--navy);padding:8px 14px;display:flex;align-items:center;gap:8px;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+      <span style="font-size:11px;font-weight:700;color:white;letter-spacing:.04em;">AI SIMULATION FACILITATOR — SPEAK YOUR ACTIONS ALOUD</span>
+    </div>
+    <iframe src="tprr_ai_simulation.html" style="width:100%;height:620px;border:none;display:block;" title="AI Verbal Simulation Facilitator" loading="lazy"></iframe>
+  </div>`
+ }
+},
+{id:7,key:'team',title:'Teamwork & Communication',eyebrow:'Module 8 · Leadership',
+ desc:'Crisis resource management, closed-loop communication, role allocation, and situational awareness for paediatric emergency teams in urgent care settings.',
+ mins:20,pills:['read','pod','sim'],
+ los:['Apply closed-loop communication in a simulated resuscitation','Allocate roles clearly and explicitly at the start of an emergency','Maintain situational awareness as team leader','Use structured ISBAR handover for escalation and transport'],
+ tabs:['article','podcast','sim'],tabLabels:['Article','Podcast','AI Sim'],
+ content:{
+  article:`<div class="art">
+    <div class="anzcor-badge">Foundation module — <span>crisis resource management evidence base</span></div>
+    <h2>Crisis resource management in urgent care</h2>
+    <p>Crisis resource management (CRM) refers to the non-technical skills that determine team performance in high-stakes clinical events. In paediatric emergencies in urgent care, CRM is often the limiting factor — not technical skill. Teams that communicate clearly, allocate roles explicitly, and maintain situational awareness consistently outperform technically superior teams that do not.</p>
+    <h2>Closed-loop communication</h2>
+    <p>Closed-loop communication requires every instruction to be acknowledged by name and repeated back. "Billie, draw up 0.15mg adrenaline" — "Drawing up 0.15mg adrenaline, confirmed." This eliminates ambiguity in high-cognitive-load environments and creates an audible record of what has and has not been done.</p>
+    <div class="callout">Research across aviation and healthcare consistently shows closed-loop communication reduces medication errors, missed steps, and task ambiguity in emergencies. It feels slower. It is not.</div>
+    <h2>Role allocation</h2>
+    <p>Implicit role assignment leads to task duplication, task omission, and confusion. Explicit allocation — "Scout, you're on airway and ventilation; Billie, compressions; I'm team leader and medications" — takes ten seconds and prevents ten minutes of chaos. Do it at the start of every emergency, every time.</p>
+    <h2>Situational awareness and the step-back role</h2>
+    <p>Team leaders must maintain a step-back perspective — monitoring overall team performance, anticipating next steps, and updating the team's shared mental model. This is incompatible with performing a hands-on task. Effective team leaders resist the urge to take over procedures and instead direct, observe, narrate, and reassess.</p>
+    <div class="bottom-line"><strong>Bottom line:</strong> Teamwork and communication are not soft skills. They are the infrastructure on which technical competence operates. Every closed-loop communication, every explicit role allocation, and every structured handover is a patient safety intervention.</div>
+  </div>`,
+  podcast:podCard('The loop that saves lives — closed-loop communication','Why teams fail in paediatric emergencies and it\'s usually not the technical stuff. CRM, the step-back role, and why the team leader should keep their hands in their pockets.'),
+  sim:`<div style="background:var(--slate);border-radius:var(--rs);overflow:hidden;margin-bottom:4px;">
+    <div style="background:var(--navy);padding:8px 14px;display:flex;align-items:center;gap:8px;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+      <span style="font-size:11px;font-weight:700;color:white;letter-spacing:.04em;">AI SIMULATION FACILITATOR — SPEAK YOUR ACTIONS ALOUD</span>
+    </div>
+    <iframe src="tprr_ai_simulation.html" style="width:100%;height:620px;border:none;display:block;" title="AI Verbal Simulation Facilitator" loading="lazy"></iframe>
+  </div>`
+ }
+}
+];
+
+function podCard(title,desc){
+  return `<div class="pod-card">
+    <div class="pod-hosts">
+      <div class="host-av" style="background:#00a87e;color:white;">S</div>
+      <div class="host-av" style="background:#e8472a;color:white;margin-left:-6px;">B</div>
+      <div style="margin-left:8px;">
+        <div class="pod-show">Tiny Patient Resus Ready</div>
+        <div class="pod-hosts-names">Scout & Billie</div>
+      </div>
+    </div>
+    <div class="pod-ep-title">${title}</div>
+    <div class="pod-ep-desc">${desc}</div>
+    <div class="pod-player"><div class="pod-player-label">Episode audio</div><div class="pod-coming">🎧 Upload your ElevenLabs MP3 here</div></div>
+  </div>
+  <p class="pod-note">Scout & Billie are AI synthetic voices created by Med Sim Solutions for educational purposes using ElevenLabs. All clinical content is reviewed by paediatric emergency clinicians.</p>`;
+}
+
+// ── MODULE ICON SVGs ──
+const ICONS={
+  logistics:`<svg viewBox="0 0 26 26" fill="none" stroke="#1d4ed8" stroke-width="2" stroke-linecap="round"><rect x="4" y="4" width="18" height="18" rx="3"/><line x1="9" y1="9" x2="17" y2="9"/><line x1="9" y1="13" x2="17" y2="13"/><line x1="9" y1="17" x2="14" y2="17"/></svg>`,
+  psych:`<svg viewBox="0 0 26 26" fill="none" stroke="#7c3aed" stroke-width="2" stroke-linecap="round"><circle cx="13" cy="10" r="5"/><path d="M8 10c0 3 2 5 5 5s5-2 5-5"/><path d="M13 15v7"/><path d="M10 19h6"/></svg>`,
+  bls:`<svg viewBox="0 0 26 26" fill="none" stroke-width="2" stroke-linecap="round"><path d="M3 13h4l2-6 4 12 3-8 2 4h5" stroke="#16a34a"/><path d="M13 4a9 9 0 100 18A9 9 0 0013 4z" stroke="#16a34a" stroke-opacity=".3"/></svg>`,
+  acls:`<svg viewBox="0 0 26 26" fill="none" stroke="#b45309" stroke-width="2" stroke-linecap="round"><polygon points="13,3 24,21 2,21"/><line x1="13" y1="10" x2="13" y2="15"/><circle cx="13" cy="18" r="1" fill="#b45309"/></svg>`,
+  airway:`<svg viewBox="0 0 26 26" fill="none" stroke="#be185d" stroke-width="2" stroke-linecap="round"><path d="M13 4c-3 0-5 2-5 5v4c0 1.5.5 3 2 4l1 5h4l1-5c1.5-1 2-2.5 2-4V9c0-3-2-5-5-5z"/><line x1="10" y1="11" x2="16" y2="11"/><line x1="10" y1="14" x2="16" y2="14"/></svg>`,
+  vasc:`<svg viewBox="0 0 26 26" fill="none" stroke="#1d4ed8" stroke-width="2" stroke-linecap="round"><line x1="6" y1="20" x2="20" y2="6"/><path d="M16 4l6 6-2 2-6-6z"/><path d="M6 14l-2 8 8-2z"/><line x1="10" y1="12" x2="14" y2="16"/></svg>`,
+  trauma:`<svg viewBox="0 0 26 26" fill="none" stroke="#dc2626" stroke-width="2" stroke-linecap="round"><path d="M13 4l2.5 5 5.5.8-4 3.9.9 5.5L13 17l-4.9 2.2.9-5.5-4-3.9 5.5-.8z"/></svg>`,
+  team:`<svg viewBox="0 0 26 26" fill="none" stroke="#16a34a" stroke-width="2" stroke-linecap="round"><circle cx="9" cy="9" r="3"/><circle cx="17" cy="9" r="3"/><path d="M3 21c0-3.3 2.7-6 6-6h8c3.3 0 6 2.7 6 6"/></svg>`
+};
+const IC_BG={logistics:'#e8f0fe',psych:'#f3e8ff',bls:'#dcfce7',acls:'#fff7ed',airway:'#fce7f3',vasc:'#dbeafe',trauma:'#fee2e2',team:'#f0fdf4'};
+
+// ── STATE ──
+let done=JSON.parse(localStorage.getItem('tprr-done')||'[]');
+let curMod=null;
+
+function save(){localStorage.setItem('tprr-done',JSON.stringify(done));}
+
+// ── RENDER MODULE LIST ──
+function renderList(){
+  const ml=document.getElementById('module-list');
+  ml.innerHTML='';
+  MODS.forEach((m,i)=>{
+    const isDone=done.includes(i);
+    const pillHtml=m.pills.map(p=>{
+      const map={read:'pill-read',pod:'pill-pod',game:'pill-game',sim:'pill-sim'};
+      const label={read:'Article',pod:'Podcast',game:'Practice',sim:'AI Sim'};
+      return `<span class="pill ${map[p]}">${label[p]}</span>`;
+    }).join('');
+    const card=document.createElement('div');
+    card.className='mcard'+(isDone?' complete':'');
+    card.innerHTML=`
+      <div class="mc-inner">
+        <div class="mc-iconbox" style="background:${IC_BG[m.key]}">${ICONS[m.key]}</div>
+        <div class="mc-body"><div class="mc-title">${m.title}</div><div class="mc-desc">${m.desc.substring(0,72)}...</div></div>
+        <div class="mc-right">
+          <div class="mc-check${isDone?' done':''}" id="chk-${i}">
+            <svg viewBox="0 0 12 12" fill="none" stroke="white" stroke-width="2.5"><polyline points="2,6 5,9 10,3"/></svg>
+          </div>
+          <div class="mc-mins">${m.mins} min</div>
+        </div>
+      </div>
+      <div class="mc-pills">${pillHtml}</div>`;
+    card.onclick=()=>openModule(i);
+    ml.appendChild(card);
+  });
+  updateProgress();
+  buildNavDots();
+}
+
+function updateProgress(){
+  const n=done.length;
+  document.getElementById('prog-fill').style.width=(n/8*100)+'%';
+  document.getElementById('prog-count').textContent=n+' of 8 complete';
+  document.querySelectorAll('.ndot').forEach((d,i)=>{
+    d.className='ndot'+(done.includes(i)?' done':'')+(curMod===i?' active':'');
+  });
+  if(n===8) document.getElementById('win-screen').style.display='block';
+  else document.getElementById('win-screen').style.display='none';
+}
+
+function buildNavDots(){
+  const nd=document.getElementById('nav-dots');
+  nd.innerHTML=MODS.map((_,i)=>`<div class="ndot${done.includes(i)?' done':''}" onclick="openModule(${i})"></div>`).join('');
+}
+
+// ── OPEN MODULE ──
+function openModule(idx){
+  curMod=idx;
+  const m=MODS[idx];
+  document.getElementById('home-view').style.display='none';
+  const mv=document.getElementById('modview');
+  mv.className='open';
+  document.getElementById('mvt-eyebrow').textContent=m.eyebrow;
+  document.getElementById('mvt-title').textContent=m.title;
+  document.getElementById('mvt-desc').textContent=m.desc;
+  document.getElementById('mv-lo-list').innerHTML=m.los.map(l=>`<li>${l}</li>`).join('');
+  // tabs
+  const tabs=document.getElementById('mv-tabs');
+  tabs.innerHTML=m.tabs.map((t,i)=>`<button class="tab${i===0?' on':''}" id="tab-${t}" onclick="showTab('${t}')">${m.tabLabels[i]}</button>`).join('');
+  // panels
+  const panels=document.getElementById('mv-panels');
+  const isDone=done.includes(idx);
+  panels.innerHTML=m.tabs.map((t,i)=>`
+    <div class="panel${i===0?' on':''}" id="pan-${t}">
+      ${m.content[t]||''}
+      <button class="done-btn${isDone?' marked':''}" onclick="markDone(${idx})">${isDone?'✓ Module complete':'Mark as complete'}</button>
+    </div>`).join('');
+  window.scrollTo(0,0);
+  updateProgress();
+}
+
+function showTab(t){
+  document.querySelectorAll('.tab').forEach(b=>b.classList.remove('on'));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('on'));
+  document.getElementById('tab-'+t)?.classList.add('on');
+  document.getElementById('pan-'+t)?.classList.add('on');
+}
+
+function markDone(idx){
+  if(!done.includes(idx)){done.push(idx);save();}
+  document.querySelectorAll('.done-btn').forEach(b=>{b.textContent='✓ Module complete';b.classList.add('marked');});
+  updateProgress();
+}
+
+function closeModule(){
+  curMod=null;
+  document.getElementById('modview').className='';
+  document.getElementById('home-view').style.display='block';
+  renderList();
+  window.scrollTo(0,0);
+}
+
+renderList();
+</script>
+</body>
+</html>

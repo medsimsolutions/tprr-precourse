@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tiny Patient Resus Ready — AI Simulation Facilitator</title>
+<style>
+:root{
+  --navy:#1a2744;--navy-mid:#243356;--teal:#0d9e75;--teal-light:#e1f5ee;
+  --teal-mid:#1db88a;--coral:#e85d3a;--coral-light:#fdf0ec;
+  --amber:#f0a500;--amber-light:#fef8e7;--slate:#f7f8fa;
+  --border:#e2e8f0;--text:#1a202c;--muted:#718096;--r:12px;--rs:8px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--slate);color:var(--text);max-width:480px;margin:0 auto;}
+
+/* SCENARIO SELECT */
+#scenario-select{padding:16px;}
+#ss-header{margin-bottom:14px;}
+#ss-header h2{font-size:16px;font-weight:700;color:var(--navy);margin-bottom:4px;}
+#ss-header p{font-size:12px;color:var(--muted);line-height:1.6;}
+.sc-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.sc-card{background:white;border:1px solid var(--border);border-radius:var(--r);padding:14px 12px;cursor:pointer;transition:border-color 0.2s,transform 0.15s;}
+.sc-card:active{transform:scale(0.97);}
+.sc-card:hover{border-color:var(--teal);}
+.sc-card .sc-icon{font-size:28px;margin-bottom:8px;}
+.sc-card h4{font-size:13px;font-weight:700;color:var(--navy);margin-bottom:3px;line-height:1.3;}
+.sc-card p{font-size:11px;color:var(--muted);line-height:1.5;}
+.sc-card .sc-diff{display:inline-block;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;margin-top:6px;}
+.diff-intro{background:#e1f5ee;color:#065f46;}
+.diff-inter{background:#fef3c7;color:#92400e;}
+.diff-adv{background:#fee2e2;color:#991b1b;}
+
+/* SIM VIEW */
+#sim-view{display:none;flex-direction:column;height:100vh;max-height:100vh;}
+#sim-nav{background:var(--navy);padding:0 14px;height:52px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+#sim-nav .back-btn{color:rgba(255,255,255,0.7);font-size:12px;cursor:pointer;display:flex;align-items:center;gap:5px;background:none;border:none;padding:6px 0;}
+#sim-nav .back-btn:hover{color:white;}
+#sim-nav .nav-title{color:white;font-size:13px;font-weight:600;}
+#sim-nav .nav-right{display:flex;align-items:center;gap:8px;}
+#speaker-btn{background:rgba(255,255,255,0.1);border:none;color:white;border-radius:6px;padding:5px 8px;font-size:11px;cursor:pointer;}
+#speaker-btn.muted{background:rgba(232,93,58,0.3);}
+
+#scenario-strip{background:var(--navy-mid);padding:10px 14px;flex-shrink:0;}
+.strip-row{display:flex;gap:8px;align-items:flex-start;}
+.strip-icon{font-size:20px;flex-shrink:0;margin-top:1px;}
+.strip-text h3{font-size:13px;font-weight:700;color:white;margin-bottom:3px;}
+.strip-text p{font-size:11px;color:rgba(255,255,255,0.65);line-height:1.5;}
+#vitals-row{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;}
+.vc{padding:3px 8px;border-radius:20px;font-size:10px;font-weight:600;color:white;}
+.vc.norm{background:rgba(13,158,117,0.4);}
+.vc.crit{background:rgba(232,93,58,0.5);}
+.vc.warn{background:rgba(240,165,0,0.4);}
+
+#chat-area{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:10px;-webkit-overflow-scrolling:touch;}
+.bubble{border-radius:var(--r);padding:10px 12px;max-width:88%;font-size:13px;line-height:1.65;}
+.bubble.facilitator{background:white;border:1px solid var(--border);align-self:flex-start;}
+.bubble.facilitator .bsender{font-size:10px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px;}
+.bubble.participant{background:var(--navy);color:white;align-self:flex-end;}
+.bubble.update{background:var(--amber-light);border:1px solid #fde68a;align-self:stretch;font-size:12px;color:#92400e;font-style:italic;}
+.bubble.update .bsender{font-size:10px;font-weight:700;color:var(--amber);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px;font-style:normal;}
+.bubble.typing{opacity:0.6;}
+.bubble.typing .dots span{display:inline-block;animation:blink 1.2s infinite;font-size:16px;}
+.bubble.typing .dots span:nth-child(2){animation-delay:0.2s;}
+.bubble.typing .dots span:nth-child(3){animation-delay:0.4s;}
+@keyframes blink{0%,80%,100%{opacity:0}40%{opacity:1}}
+
+#input-area{background:white;border-top:1px solid var(--border);padding:10px 12px;flex-shrink:0;}
+#mic-row{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+#mic-btn{width:54px;height:54px;border-radius:50%;border:2px solid var(--border);background:var(--slate);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all 0.2s;flex-shrink:0;font-size:22px;}
+#mic-btn.listening{border-color:var(--coral);background:var(--coral-light);animation:ripple 1.4s infinite;}
+#mic-btn.loading{border-color:var(--teal);background:var(--teal-light);}
+@keyframes ripple{0%,100%{box-shadow:0 0 0 0 rgba(232,93,58,0.25)}50%{box-shadow:0 0 0 10px rgba(232,93,58,0)}}
+#mic-status{flex:1;font-size:12px;color:var(--muted);line-height:1.5;}
+#transcript-live{font-size:11px;color:var(--teal);min-height:14px;font-style:italic;margin-bottom:6px;padding:0 2px;}
+#text-row{display:flex;gap:6px;}
+#text-input{flex:1;font-size:13px;padding:9px 11px;border:1px solid var(--border);border-radius:var(--rs);background:var(--slate);color:var(--text);resize:none;min-height:40px;max-height:80px;}
+#send-btn{background:var(--teal);color:white;border:none;border-radius:var(--rs);padding:9px 14px;font-size:13px;font-weight:600;cursor:pointer;flex-shrink:0;}
+#send-btn:disabled{opacity:0.5;}
+#no-speech-msg{font-size:11px;color:var(--muted);background:var(--amber-light);border-radius:var(--rs);padding:7px 10px;margin-bottom:8px;display:none;line-height:1.5;}
+
+#hints-row{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px;}
+.hint{font-size:11px;padding:4px 9px;border-radius:20px;border:1px solid var(--border);background:white;color:var(--muted);cursor:pointer;transition:background 0.15s;}
+.hint:hover{background:var(--teal-light);border-color:var(--teal);color:#065f46;}
+
+#progress-tracker{background:var(--slate);border-top:1px solid var(--border);padding:8px 12px;display:flex;gap:5px;flex-wrap:wrap;flex-shrink:0;}
+.pt-item{font-size:10px;padding:3px 8px;border-radius:10px;border:1px solid var(--border);background:white;color:var(--muted);}
+.pt-item.achieved{background:var(--teal-light);border-color:var(--teal);color:#065f46;font-weight:600;}
+</style>
+</head>
+<body>
+
+<!-- SCENARIO SELECTION -->
+<div id="scenario-select">
+  <div id="ss-header">
+    <h2>AI Simulation Facilitator</h2>
+    <p>Speak your clinical actions aloud — or type them. The AI facilitator responds in real time with psychologically safe feedback aligned to ANZCOR 2024 guidelines.</p>
+  </div>
+  <div class="sc-grid">
+    <div class="sc-card" onclick="startSim(0)">
+      <div class="sc-icon">💓</div>
+      <h4>Paediatric Cardiac Arrest</h4>
+      <p>3-year-old, non-shockable rhythm. Lead your team through resuscitation.</p>
+      <span class="sc-diff diff-intro">Introductory</span>
+    </div>
+    <div class="sc-card" onclick="startSim(1)">
+      <div class="sc-icon">⚡</div>
+      <h4>Shockable Rhythm</h4>
+      <p>6-year-old, witnessed VF arrest. Defibrillation decision-making.</p>
+      <span class="sc-diff diff-inter">Intermediate</span>
+    </div>
+    <div class="sc-card" onclick="startSim(2)">
+      <div class="sc-icon">🫁</div>
+      <h4>Respiratory Failure</h4>
+      <p>18-month-old, severe bronchiolitis, deteriorating rapidly.</p>
+      <span class="sc-diff diff-intro">Introductory</span>
+    </div>
+    <div class="sc-card" onclick="startSim(3)">
+      <div class="sc-icon">💉</div>
+      <h4>Anaphylaxis</h4>
+      <p>4-year-old, anaphylaxis with cardiovascular collapse. IV access failed.</p>
+      <span class="sc-diff diff-inter">Intermediate</span>
+    </div>
+    <div class="sc-card" onclick="startSim(4)">
+      <div class="sc-icon">🧠</div>
+      <h4>Status Epilepticus</h4>
+      <p>5-year-old, prolonged seizure, not responding to initial benzodiazepine.</p>
+      <span class="sc-diff diff-inter">Intermediate</span>
+    </div>
+    <div class="sc-card" onclick="startSim(5)">
+      <div class="sc-icon">🩸</div>
+      <h4>Septic Shock</h4>
+      <p>2-year-old, meningococcal septicaemia, rapid deterioration.</p>
+      <span class="sc-diff diff-adv">Advanced</span>
+    </div>
+  </div>
+</div>
+
+<!-- SIM VIEW -->
+<div id="sim-view">
+  <div id="sim-nav">
+    <button class="back-btn" onclick="exitSim()">← Scenarios</button>
+    <span class="nav-title" id="nav-title">AI Facilitator</span>
+    <div class="nav-right">
+      <button id="speaker-btn" onclick="toggleSpeaker()">🔊 Audio on</button>
+    </div>
+  </div>
+
+  <div id="scenario-strip">
+    <div class="strip-row">
+      <div class="strip-icon" id="strip-icon">💓</div>
+      <div class="strip-text">
+        <h3 id="strip-title"></h3>
+        <p id="strip-desc"></p>
+      </div>
+    </div>
+    <div id="vitals-row"></div>
+  </div>
+
+  <div id="chat-area"></div>
+
+  <div id="progress-tracker"></div>
+
+  <div id="input-area">
+    <div id="hints-row"></div>
+    <div id="no-speech-msg">Voice recognition unavailable — type your actions below and the AI facilitator will still respond fully.</div>
+    <div id="mic-row">
+      <button id="mic-btn" onclick="toggleMic()">🎤</button>
+      <span id="mic-status">Tap the mic and speak your clinical actions aloud as team leader.</span>
+    </div>
+    <div id="transcript-live"></div>
+    <div id="text-row">
+      <textarea id="text-input" placeholder="Or type your actions here..." rows="1"></textarea>
+      <button id="send-btn" onclick="sendText()">Send</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const SCENARIOS = [
+  {
+    id:0, icon:"💓", title:"Paediatric Cardiac Arrest — Non-Shockable",
+    navTitle:"Cardiac Arrest",
+    strip:"3yo Aria, 15kg. Unresponsive, no pulse, apnoeic. Parents report 10-min collapse. Your team: one nurse, one doctor.",
+    vitals:[{l:"Pulse",v:"Absent",c:"crit"},{l:"Resp",v:"Apnoeic",c:"crit"},{l:"SpO₂",v:"—",c:"warn"},{l:"Wt",v:"15kg",c:"norm"},{l:"Rhythm",v:"PEA",c:"crit"}],
+    opening:"The child is on the trolley. Parents are outside. Your nurse is at the head of the bed looking to you. What are your first instructions?",
+    hints:["Call for help and start CPR","Open airway — head tilt chin lift","Attach cardiac monitor","Gain IO access — tibial","Adrenaline 0.15mg IV/IO","Check reversible causes — 4Hs 4Ts"],
+    objectives:["Call for help / activate emergency","Open airway and begin ventilation","Start chest compressions","Attach cardiac monitor","Establish IO or IV access","Administer adrenaline","Assess reversible causes"],
+    system:`You are an expert paediatric emergency simulation facilitator for Med Sim Solutions, a NZ healthcare simulation company. You are running a real-time verbal simulation for a senior urgent care clinician.
+
+SCENARIO: 3-year-old Aria, approximately 15kg, in non-shockable cardiac arrest (PEA). Found unresponsive at home by parents, estimated 10-minute downtime. Your team: one nurse (at head of bed), one doctor (you, the participant, are team leader).
+
+CLINICAL BENCHMARKS (ANZCOR 2024, Guideline 12):
+1. Call for help / activate emergency response
+2. Open airway — head tilt chin lift or jaw thrust; check breathing
+3. Start BVM ventilation (15:2 with 2 rescuers, sufficient for visible chest rise)
+4. Chest compressions: heel of hand, 5cm depth, 100–120/min, full recoil
+5. Attach cardiac monitor — identify rhythm
+6. Establish IO access (tibial, 2cm below tibial tuberosity) if IV fails
+7. Adrenaline 0.01mg/kg = 0.15mg (0.15ml of 1:10,000) — immediately for non-shockable, every 3–5 min
+8. Consider reversible causes: 4Hs (Hypoxia, Hypovolaemia, Hypo/Hyperkalaemia, Hypothermia) and 4Ts (Tension pneumothorax, Tamponade, Toxins, Thrombosis)
+9. Reassess rhythm every 2 minutes
+10. Clear communication with team — closed-loop, role allocation
+
+YOUR FACILITATION STYLE:
+- Warm, direct, clinically precise
+- Advance the scenario realistically when correct actions are taken
+- When something is missed or incorrect: use psychologically safe language that normalises learning
+- Never use: "wrong", "incorrect", "no", "mistake", "you should have"
+- Use phrases like: "Good thinking — one thing to add...", "You've got the right idea, and ANZCOR also recommends...", "That's a solid approach, what might come even before that?", "Nice — and while that's happening, what else is your team doing?"
+- Keep responses to 3 sentences maximum
+- When the scenario should advance (ROSC, rhythm change, deterioration), start a new paragraph with "📋 Scenario update:" and describe what happens
+- After correct adrenaline administration and 2 cycles of CPR with no change, update: rhythm remains PEA, repeat adrenaline
+- After 4 correct cycles with adrenaline: offer possibility of ROSC if team has been systematic
+- Track what has been done; don't repeat praise for the same action
+- Reference NZ clinical context and ANZCOR throughout
+- This is simulation training only — never real clinical advice`
+  },
+  {
+    id:1, icon:"⚡", title:"Shockable Rhythm — VF Arrest",
+    navTitle:"VF Arrest",
+    strip:"6yo Tane, 22kg. Witnessed collapse at school. Bystander CPR in progress. Shockable rhythm on AED.",
+    vitals:[{l:"Rhythm",v:"VF",c:"crit"},{l:"Pulse",v:"Absent",c:"crit"},{l:"CPR",v:"In progress",c:"warn"},{l:"Wt",v:"22kg",c:"norm"}],
+    opening:"Bystander CPR is in progress. The school AED is attached and advising shock. Your team has just arrived. What do you do?",
+    hints:["Confirm safety — stand clear","Deliver shock — 88J (4J/kg)","Resume CPR immediately after shock","Gain IV or IO access","Adrenaline after 2nd shock","Amiodarone 5mg/kg if refractory VF"],
+    objectives:["Confirm rhythm / stand clear","Deliver correct energy dose","Immediate CPR after shock","Establish vascular access","Administer adrenaline correctly","Consider amiodarone for refractory VF","Reassess every 2 minutes"],
+    system:`You are an expert paediatric emergency simulation facilitator for Med Sim Solutions, NZ. Running a real-time simulation for a senior urgent care clinician.
+
+SCENARIO: 6-year-old Tane, 22kg. Witnessed collapse at school. Bystander CPR ongoing. AED attached and advising shock. VF rhythm confirmed. Participant is team leader arriving to scene.
+
+CLINICAL BENCHMARKS (ANZCOR 2024):
+1. Confirm safety — stand clear of patient before shock
+2. Deliver shock: 4J/kg = 88J. For manual defibrillator. For AED use as-is for child over 8; paediatric attenuator preferred under 8.
+3. IMMEDIATELY resume CPR after shock — do not pause to check pulse
+4. Continue 15:2 CPR for 2 minutes then reassess
+5. Establish IV or IO access
+6. Adrenaline 0.01mg/kg (0.22mg) after SECOND shock for refractory VF
+7. Amiodarone 5mg/kg (110mg) for VF refractory after 3rd shock
+8. Consider reversible causes throughout
+9. Second and subsequent shocks: 4J/kg (can increase to 4–8J/kg to maximum 10J/kg after 4th shock per ANZCOR)
+10. Minimise hands-off time — CPR pauses <5 seconds for rhythm check and shock
+
+FACILITATION: Same psychologically safe approach. Advance scenario: after first correct shock + 2min CPR, rhythm converts to sinus tachycardia with ROSC. If adrenaline given before 2nd shock (incorrect timing), gently redirect. If shock withheld or delayed, redirect with clinical rationale.`
+  },
+  {
+    id:2, icon:"🫁", title:"Respiratory Failure — Severe Bronchiolitis",
+    navTitle:"Respiratory Failure",
+    strip:"18-month-old Jamie, 11kg. Severe bronchiolitis, SpO₂ 78%, increasing work of breathing, tiring rapidly.",
+    vitals:[{l:"SpO₂",v:"78%",c:"crit"},{l:"RR",v:"68/min",c:"crit"},{l:"HR",v:"192",c:"warn"},{l:"Wt",v:"11kg",c:"norm"},{l:"Temp",v:"38.2°C",c:"warn"}],
+    opening:"The child is on the bed, visibly tiring. Parents are present and frightened. SpO₂ is 78% on room air. What are your immediate priorities?",
+    hints:["Apply high-flow oxygen","Position upright — sniffing position","Prepare BVM as backup","Consider saline nasal drops","IV access and fluid assessment","Escalate — retrieval notification"],
+    objectives:["Apply supplemental oxygen immediately","Optimise positioning","Assess work of breathing systematically","Establish vascular access","Assess for need for ventilatory support","Activate retrieval if appropriate","Communicate with family"],
+    system:`You are an expert paediatric emergency simulation facilitator for Med Sim Solutions, NZ.
+
+SCENARIO: 18-month-old Jamie, 11kg. Severe bronchiolitis with impending respiratory failure. SpO₂ 78% on room air, RR 68, using accessory muscles, tracheal tug, nasal flare. Tiring — decreased respiratory effort developing. Parents present and very anxious.
+
+CLINICAL BENCHMARKS:
+1. Immediate high-flow oxygen — 15L via non-rebreather mask or high-flow nasal cannula if available
+2. Position: upright, sniffing position — do NOT lay flat
+3. Continuous SpO₂ monitoring; target SpO₂ >92%
+4. Assess severity: work of breathing signs, air entry, mental state
+5. IV access — 22g or 24g; fluid resuscitation only if dehydrated (10-20ml/kg NS cautiously — not routine in bronchiolitis)
+6. Do NOT use salbutamol, adrenaline nebulisers or steroids routinely in bronchiolitis (evidence does not support)
+7. Escalate early — if SpO₂ <90% on high-flow O2 or increasing fatigue: PICU/retrieval notification
+8. Prepare BVM for potential respiratory arrest
+9. If apnoeic: BVM ventilation, consider intubation — this is a retrieval indication
+10. Family communication: honest, calm, keep parents informed
+
+IMPORTANT CLINICAL NOTE: Bronchiolitis does NOT respond to salbutamol, ipratropium, or steroids. If participant suggests these, use psychologically safe redirection: "That's a reasonable instinct given how it looks clinically — the evidence for bronchiolitis specifically shows that bronchodilators don't change outcomes. What else are you thinking about?"
+
+Advance scenario: with oxygen applied and correct positioning, SpO₂ improves to 88%. If retrieval activated appropriately, update that retrieval team is 45 minutes away. If participant delays escalation, child tires further — model gentle urgency.`
+  },
+  {
+    id:3, icon:"💉", title:"Anaphylaxis with Cardiovascular Collapse",
+    navTitle:"Anaphylaxis",
+    strip:"4yo Priya, 17kg. Known nut allergy. BP 55/30, HR 180, urticaria, stridor. IV access failed twice.",
+    vitals:[{l:"BP",v:"55/30",c:"crit"},{l:"HR",v:"180",c:"crit"},{l:"SpO₂",v:"89%",c:"crit"},{l:"Wt",v:"17kg",c:"norm"}],
+    opening:"Two IV attempts have failed. The child's BP is 55/30 and dropping. Parents gave EpiPen at home 15 minutes ago. What now?",
+    hints:["Adrenaline IM — 0.17mg IM anterolateral thigh","Gain IO access immediately","High-flow oxygen","Fluid bolus 20ml/kg NS","Antihistamine — promethazine 0.5mg/kg","Hydrocortisone 4mg/kg IV/IO"],
+    objectives:["Administer IM adrenaline correctly","Establish IO access when IV fails","Administer fluid resuscitation","Apply supplemental oxygen","Consider second-line medications","Recognise biphasic reaction risk","Arrange retrieval/admission"],
+    system:`You are an expert paediatric emergency simulation facilitator for Med Sim Solutions, NZ.
+
+SCENARIO: 4-year-old Priya, 17kg. Severe anaphylaxis with cardiovascular collapse. Known peanut allergy. Parents gave EpiPen (0.15mg) 15 minutes ago at home. Now: BP 55/30, HR 180, SpO₂ 89%, urticaria covering trunk, mild stridor. Two IV attempts failed.
+
+CLINICAL BENCHMARKS (ANZCOR / ASCIA guidelines):
+1. IM adrenaline FIRST — 0.01mg/kg = 0.17mg IM (anterolateral thigh, outer aspect). Do not wait for IV/IO access.
+2. IO access: proximal tibia, 2cm below tibial tuberosity — fastest reliable access when IV fails in emergency
+3. High-flow oxygen: 15L via NRB mask; target SpO₂ >94%
+4. Fluid resuscitation: 20ml/kg 0.9% NaCl bolus IV/IO — may need to repeat
+5. Second IM adrenaline if no response in 5–10 minutes (or IV/IO adrenaline infusion if IO access)
+6. Antihistamine: promethazine 0.5mg/kg IV/IO (NOT first-line — only after adrenaline)
+7. Hydrocortisone: 4mg/kg IV/IO (NOT first-line — delayed effect, supportive)
+8. Position: supine with legs elevated if cardiovascular collapse; upright if stridor/airway
+9. Biphasic reaction risk: minimum 4–6 hour observation even after clinical improvement
+10. Retrieval/admission: all cardiovascular collapse anaphylaxis requires hospital admission
+
+IMPORTANT: Antihistamines and steroids are NOT first-line and will not resolve cardiovascular collapse. If suggested as first action: "Antihistamines and steroids are useful supportive agents — and the single intervention that reverses anaphylaxis cardiovascular collapse is adrenaline. What's your priority right now?"
+
+Advance: after correct IM adrenaline, BP improves to 75/45 after 5 minutes. After IO access and fluid bolus, BP 90/60. Stridor resolving. Monitor for biphasic reaction.`
+  },
+  {
+    id:4, icon:"🧠", title:"Status Epilepticus",
+    navTitle:"Status Epilepticus",
+    strip:"5yo Ben, 20kg. Tonic-clonic seizure, now 15 minutes. IV midazolam 5min ago — seizure ongoing.",
+    vitals:[{l:"Seizure",v:"15min+",c:"crit"},{l:"SpO₂",v:"91%",c:"crit"},{l:"HR",v:"148",c:"warn"},{l:"Wt",v:"20kg",c:"norm"}],
+    opening:"IV midazolam 0.1mg/kg was given 5 minutes ago. The child is still seizing. What's your next step?",
+    hints:["Second benzodiazepine — IV lorazepam 0.1mg/kg","High-flow oxygen","Check BSL urgently","Consider levetiracetam 40mg/kg IV","Prepare for RSI if refractory","Notify retrieval team"],
+    objectives:["Administer second-line anticonvulsant","Apply and maintain supplemental oxygen","Check blood glucose","Consider third-line treatment","Plan for RSI if required","Activate retrieval","Investigate underlying cause"],
+    system:`You are an expert paediatric emergency simulation facilitator for Med Sim Solutions, NZ.
+
+SCENARIO: 5-year-old Ben, 20kg. Known febrile illness for 2 days. Tonic-clonic seizure now 15 minutes duration. IV midazolam 0.1mg/kg (2mg) given 5 minutes ago — seizure ongoing. IV access in situ. No prior seizure history.
+
+CLINICAL BENCHMARKS (NZ/ANZCOR/ILAE status epilepticus guidelines):
+PHASE 1 — already attempted: Midazolam 0.1mg/kg IV (given) OR 0.5mg/kg buccal/intranasal if no IV
+PHASE 2 — NOW REQUIRED (>5min after first benzodiazepine, still seizing):
+1. IV lorazepam 0.1mg/kg (2mg) OR second dose IV midazolam 0.1mg/kg if lorazepam unavailable
+2. High-flow oxygen throughout — SpO₂ monitoring, target >94%
+3. BSL check immediately — treat hypoglycaemia: glucose 10% 5ml/kg IV (or 50% glucose 1ml/kg diluted)
+PHASE 3 — if still seizing after phase 2 (>20 minutes total):
+4. Levetiracetam 40mg/kg IV over 15 minutes (max 3g) — preferred second-line in NZ
+   OR Phenytoin 20mg/kg IV over 20 minutes (monitor cardiac rhythm)
+   OR Sodium valproate 40mg/kg IV (avoid if metabolic disorder suspected)
+5. Notify retrieval/PICU — status epilepticus refractory to 2 benzodiazepines + second-line agent = intubation territory
+6. Consider RSI if airway compromise or refractory seizure
+7. Investigate cause: fever, electrolytes, glucose, infection screen, toxicology
+
+Advance: after correct second benzodiazepine, seizure persists. After levetiracetam at 25 minutes, seizure terminates. Post-ictal state. If retrieval not called by 20min mark, update that child shows signs of respiratory compromise.`
+  },
+  {
+    id:5, icon:"🩸", title:"Septic Shock — Meningococcal",
+    navTitle:"Septic Shock",
+    strip:"2yo Mia, 13kg. 6hr fever, non-blanching rash appearing. HR 195, BP 55/25, cap refill 6 sec.",
+    vitals:[{l:"BP",v:"55/25",c:"crit"},{l:"HR",v:"195",c:"crit"},{l:"Cap refill",v:"6 sec",c:"crit"},{l:"Temp",v:"39.8°C",c:"warn"}],
+    opening:"The rash appeared in the last 30 minutes and is spreading. The child is mottled and barely rousable. What's your immediate management?",
+    hints:["IO access — don't delay for difficult IV","Fluid bolus 20ml/kg NS","IV ceftriaxone 100mg/kg (max 4g)","High-flow oxygen","Blood cultures before antibiotics if possible","Notify retrieval immediately"],
+    objectives:["Recognise meningococcal septicaemia","Establish vascular access urgently","Administer antibiotics within 30 min","Fluid resuscitation","Apply oxygen","Activate retrieval immediately","Monitor and reassess after each bolus"],
+    system:`You are an expert paediatric emergency simulation facilitator for Med Sim Solutions, NZ.
+
+SCENARIO: 2-year-old Mia, 13kg. Meningococcal septicaemia. Presenting with 6-hour history of fever, now rapidly deteriorating. Non-blanching petechial/purpuric rash spreading across trunk and legs. HR 195, BP 55/25, cap refill 6 seconds centrally, mottled, GCS 11 (eyes 3, verbal 3, motor 5). No IV access yet.
+
+CLINICAL BENCHMARKS (NZ Meningococcal guidelines / Surviving Sepsis):
+1. Activate emergency response / notify retrieval IMMEDIATELY — this child needs PICU
+2. IO access: DO NOT spend more than 2 IV attempts — go IO. Proximal tibia.
+3. Fluid resuscitation: 20ml/kg 0.9% NaCl bolus IV/IO over 5–10 minutes. Reassess. May need 2–3 boluses. Use cautiously after 3rd bolus — risk of fluid overload.
+4. IV/IO ceftriaxone 100mg/kg (max 4g single dose) — DO NOT delay for blood cultures if access is difficult. Give antibiotics within 30 minutes of presentation.
+5. Blood cultures: take before antibiotics IF rapid and does not delay treatment
+6. High-flow oxygen: 15L NRB, target SpO₂ >94%
+7. Dextrose check: treat hypoglycaemia — children with sepsis are at high risk
+8. Hydrocortisone 2mg/kg IV/IO: consider for fluid-refractory, catecholamine-refractory shock
+9. Adrenaline infusion: consider if fluid-refractory shock persists (retrieval team guidance)
+10. Reassess after every bolus: HR, BP, cap refill, mental state, urine output
+
+CRITICAL TEACHING POINT: Antibiotics should NOT be delayed for blood cultures in a child this unwell. If participant delays: "Getting cultures is ideal — and in this clinical picture, the evidence strongly supports giving antibiotics immediately even before cultures if access is proving difficult. How are you approaching the vascular access?"
+
+Advance: after IO access + first fluid bolus, cap refill improves to 4 sec, HR 185. After antibiotics, no immediate change (expected). Retrieval team ETA 35 minutes. After 2nd bolus, child's mental state worsens — requires ongoing reassessment prompts.`
+  }
+];
+
+let currentSim = null;
+let messages = [];
+let recognition = null;
+let isListening = false;
+let isLoading = false;
+let speakerOn = true;
+let achievedObjectives = [];
+
+function startSim(idx){
+  currentSim = SCENARIOS[idx];
+  messages = [];
+  achievedObjectives = [];
+  document.getElementById('scenario-select').style.display='none';
+  const sv = document.getElementById('sim-view');
+  sv.style.display='flex';
+  document.getElementById('nav-title').textContent = currentSim.navTitle;
+  document.getElementById('strip-icon').textContent = currentSim.icon;
+  document.getElementById('strip-title').textContent = currentSim.title;
+  document.getElementById('strip-desc').textContent = currentSim.strip;
+  document.getElementById('vitals-row').innerHTML = currentSim.vitals.map(v=>`<span class="vc ${v.c}">${v.l}: ${v.v}</span>`).join('');
+  document.getElementById('chat-area').innerHTML='';
+  buildHints();
+  buildObjectives();
+  initSpeech();
+  const opening = currentSim.opening;
+  addBubble('facilitator', opening);
+  messages.push({role:'assistant', content: opening});
+  speakText(opening);
+}
+
+function buildHints(){
+  const hr = document.getElementById('hints-row');
+  hr.innerHTML = currentSim.hints.map(h=>`<span class="hint" onclick="useHint('${h}')">${h}</span>`).join('');
+}
+
+function buildObjectives(){
+  const pt = document.getElementById('progress-tracker');
+  pt.innerHTML = currentSim.objectives.map((o,i)=>`<span class="pt-item" id="obj-${i}">${o}</span>`).join('');
+}
+
+function addBubble(role, text, type){
+  const ca = document.getElementById('chat-area');
+  const div = document.createElement('div');
+  if(type==='update'){
+    div.className='bubble update';
+    div.innerHTML=`<div class="bsender">Scenario update</div>${text}`;
+  } else if(role==='facilitator'){
+    div.className='bubble facilitator';
+    div.innerHTML=`<div class="bsender">AI Facilitator</div>${text}`;
+  } else {
+    div.className='bubble participant';
+    div.textContent=text;
+  }
+  ca.appendChild(div);
+  ca.scrollTop=ca.scrollHeight;
+  return div;
+}
+
+function addTyping(){
+  const ca = document.getElementById('chat-area');
+  const div = document.createElement('div');
+  div.className='bubble facilitator typing'; div.id='typing-bubble';
+  div.innerHTML=`<div class="bsender">AI Facilitator</div><div class="dots"><span>•</span><span>•</span><span>•</span></div>`;
+  ca.appendChild(div); ca.scrollTop=ca.scrollHeight;
+}
+
+function removeTyping(){ const t=document.getElementById('typing-bubble'); if(t) t.remove(); }
+
+async function sendToAI(userText){
+  if(isLoading||!userText.trim()) return;
+  isLoading=true; updateMicUI();
+  addBubble('participant', userText);
+  messages.push({role:'user', content: userText});
+  addTyping();
+  try{
+    const res = await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:1000,
+        system: currentSim.system,
+        messages: messages.slice(-14)
+      })
+    });
+    const data = await res.json();
+    removeTyping();
+    const reply = (data.content&&data.content[0]) ? data.content[0].text : "I didn't catch that clearly. Can you tell me what you'd do first?";
+    messages.push({role:'assistant', content: reply});
+    const parts = reply.split(/📋 Scenario update:/);
+    if(parts.length>1){
+      addBubble('facilitator', parts[0].trim());
+      addBubble(null, parts[1].trim(), 'update');
+      speakText(parts[0].trim());
+    } else {
+      addBubble('facilitator', reply);
+      speakText(reply);
+    }
+    checkObjectives(userText, reply);
+  } catch(e){
+    removeTyping();
+    addBubble('facilitator','There was a connection issue. Please try again.');
+  }
+  isLoading=false; updateMicUI();
+}
+
+function checkObjectives(userText, reply){
+  const combined = (userText+' '+reply).toLowerCase();
+  const keywords = [
+    ['call for help','help','activate','emergency response','activate emergency'],
+    ['airway','open airway','head tilt','jaw thrust','ventilat','bvm','breathing'],
+    ['compressions','cpr','compress','chest compress'],
+    ['monitor','ecg','rhythm','cardiac monitor'],
+    ['io','intraosseous','iv access','vascular access','cannula'],
+    ['adrenaline','epinephrine','drug','medication'],
+    ['reversible','4h','4t','hypoxia','hypovolaemia','tension','cause'],
+    ['shock','defibrillat','defib','4j'],
+    ['antibiotic','ceftriaxone','sepsis','septic'],
+    ['fluid','bolus','saline','resuscitat'],
+    ['oxygen','o2','spo2','high flow'],
+    ['retrieval','transfer','escalat','picu'],
+    ['glucose','bsl','blood sugar','hypoglycaemia'],
+    ['levetiracetam','phenytoin','valproate','second line'],
+  ];
+  currentSim.objectives.forEach((obj,i)=>{
+    if(achievedObjectives.includes(i)) return;
+    const words = keywords[i]||[];
+    if(words.some(w=>combined.includes(w))){
+      achievedObjectives.push(i);
+      const el=document.getElementById('obj-'+i);
+      if(el) el.className='pt-item achieved';
+    }
+  });
+}
+
+function useHint(h){ sendToAI(h); }
+
+function sendText(){
+  const ti=document.getElementById('text-input');
+  const val=ti.value.trim(); if(!val||isLoading) return;
+  ti.value=''; sendToAI(val);
+}
+
+document.addEventListener('DOMContentLoaded',()=>{
+  const ti=document.getElementById('text-input');
+  ti.addEventListener('keydown',e=>{ if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); sendText(); } });
+});
+
+function initSpeech(){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){ document.getElementById('no-speech-msg').style.display='block'; document.getElementById('mic-row').style.display='none'; return; }
+  recognition=new SR(); recognition.continuous=false; recognition.interimResults=true; recognition.lang='en-NZ';
+  recognition.onstart=()=>{ isListening=true; updateMicUI(); };
+  recognition.onresult=e=>{
+    let interim='',final='';
+    for(let i=e.resultIndex;i<e.results.length;i++){
+      if(e.results[i].isFinal) final+=e.results[i][0].transcript;
+      else interim+=e.results[i][0].transcript;
+    }
+    document.getElementById('transcript-live').textContent=interim||final||'';
+    if(final){ stopListening(); document.getElementById('transcript-live').textContent=''; sendToAI(final); }
+  };
+  recognition.onerror=e=>{ stopListening(); if(e.error==='not-allowed') document.getElementById('no-speech-msg').style.display='block'; };
+  recognition.onend=()=>{ isListening=false; updateMicUI(); };
+}
+
+function toggleMic(){
+  if(isLoading) return;
+  if(isListening){ stopListening(); return; }
+  try{ recognition.start(); } catch(e){}
+}
+
+function stopListening(){ isListening=false; try{ recognition.stop(); } catch(e){} updateMicUI(); }
+
+function updateMicUI(){
+  const btn=document.getElementById('mic-btn'); const st=document.getElementById('mic-status');
+  if(isLoading){ btn.className='loading'; btn.textContent='⏳'; st.textContent='AI facilitator is thinking...'; }
+  else if(isListening){ btn.className='listening'; btn.textContent='🔴'; st.textContent='Listening — speak your actions now.'; }
+  else { btn.className=''; btn.textContent='🎤'; st.textContent='Tap the mic and speak your clinical actions aloud as team leader.'; }
+}
+
+function speakText(text){
+  if(!speakerOn||!window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+  const clean=text.replace(/📋[^.]*\./g,'').replace(/\*\*/g,'').trim();
+  const utt=new SpeechSynthesisUtterance(clean);
+  utt.rate=1.05; utt.pitch=1.0;
+  const voices=speechSynthesis.getVoices();
+  const nzVoice=voices.find(v=>v.lang==='en-NZ')||voices.find(v=>v.lang.startsWith('en-AU'))||voices.find(v=>v.lang.startsWith('en-GB'))||voices.find(v=>v.lang.startsWith('en'));
+  if(nzVoice) utt.voice=nzVoice;
+  speechSynthesis.speak(utt);
+}
+
+function toggleSpeaker(){
+  speakerOn=!speakerOn;
+  const btn=document.getElementById('speaker-btn');
+  if(speakerOn){ btn.textContent='🔊 Audio on'; btn.classList.remove('muted'); }
+  else { btn.textContent='🔇 Audio off'; btn.classList.add('muted'); window.speechSynthesis&&speechSynthesis.cancel(); }
+}
+
+function exitSim(){
+  window.speechSynthesis&&speechSynthesis.cancel();
+  if(recognition) try{ recognition.stop(); } catch(e){}
+  document.getElementById('sim-view').style.display='none';
+  document.getElementById('scenario-select').style.display='block';
+  currentSim=null; messages=[]; achievedObjectives=[];
+}
+
+window.addEventListener('load',()=>{ if(window.speechSynthesis) speechSynthesis.getVoices(); });
+</script>
+</body>
+</html>
